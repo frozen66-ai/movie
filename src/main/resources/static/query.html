@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电影评分系统 - 数据查询</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .nav-links a.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* 主容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        /* 查询表单 */
+        .query-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        
+        .form-group {
+            flex: 1;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .query-btn, .load-all-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .query-btn {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .query-btn:hover {
+            background-color: #5568d3;
+        }
+        
+        .load-all-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .load-all-btn:hover {
+            background-color: #218838;
+        }
+        
+        /* 数据表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .rating-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background-color: #ffd700;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+        
+        .result-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            color: #666;
+        }
+        
+        .movie-detail {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .movie-detail p {
+            margin: 8px 0;
+        }
+        
+        .movie-detail strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <div class="container">
+            <h1>🎬 电影评分系统</h1>
+            <div class="nav-links">
+                <a href="index.html">可视化报表</a>
+                <a href="query.html" class="active">数据查询</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主内容 -->
+    <div class="container">
+        <!-- 单个电影查询 -->
+        <div class="section">
+            <h2>🔍 单个电影查询 (从HBase)</h2>
+            <div class="query-form">
+                <div class="form-group">
+                    <label for="movieId">电影ID</label>
+                    <input type="text" id="movieId" placeholder="例如: 1, 6, 318..." />
+                </div>
+                <button class="query-btn" onclick="queryMovie()">按ID查询</button>
+            </div>
+            <div id="movieResult"></div>
+        </div>
+        
+        <!-- 标题搜索 -->
+        <div class="section">
+            <h2>🔎 标题模糊搜索 (从HBase)</h2>
+            <div class="query-form">
+                <div class="form-group">
+                    <label for="movieTitle">电影标题关键词</label>
+                    <input type="text" id="movieTitle" placeholder="例如: Toy, Matrix, Star..." />
+                </div>
+                <button class="query-btn" onclick="searchByTitle()">搜索</button>
+            </div>
+            <div id="searchResult"></div>
+        </div>
+        
+        <!-- 所有电影列表 -->
+        <div class="section">
+            <h2>📋 所有电影评分数据 (从HBase读取)</h2>
+            <button class="load-all-btn" onclick="loadAllMovies()">加载所有电影</button>
+            <div id="allMoviesInfo" class="result-info" style="display:none;"></div>
+            <div class="table-container">
+                <div id="allMovies" class="loading">点击"加载所有电影"按钮查看数据</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = '/api/movies';
+        
+        // 查询单个电影
+        async function queryMovie() {
+            const movieId = document.getElementById('movieId').value.trim();
+            if (!movieId) {
+                alert('请输入电影ID');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('movieResult');
+            resultDiv.innerHTML = '<p class="loading">查询中...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/${movieId}`);
+                
+                if (!response.ok) {
+                    resultDiv.innerHTML = '<p class="loading">未找到该电影</p>';
+                    return;
+                }
+                
+                const movie = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="movie-detail">
+                        <p><strong>电影ID:</strong> ${movie.movieId}</p>
+                        <p><strong>标题:</strong> ${movie.title}</p>
+                        <p><strong>平均评分:</strong> <span class="rating-badge">${movie.avgRating.toFixed(2)} ⭐</span></p>
+                        <p><strong>评分次数:</strong> ${movie.ratingCount}</p>
+                        <p><strong>最后更新:</strong> ${new Date(movie.lastUpdateTime).toLocaleString('zh-CN')}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error querying movie:', error);
+                resultDiv.innerHTML = '<p class="loading">查询失败，请检查后端服务</p>';
+            }
+        }
+        
+        // 通过标题搜索电影
+        async function searchByTitle() {
+            const keyword = document.getElementById('movieTitle').value.trim();
+            if (!keyword) {
+                alert('请输入搜索关键词');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('searchResult');
+            resultDiv.innerHTML = '<p class="loading">搜索中...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/search?title=${encodeURIComponent(keyword)}`);
+                const movies = await response.json();
+                
+                if (movies.length === 0) {
+                    resultDiv.innerHTML = '<p class="loading">未找到匹配的电影</p>';
+                    return;
+                }
+                
+                let html = `<div class="movie-detail" style="background: #e8f4f8; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                    <strong>找到 ${movies.length} 部电影</strong>
+                </div>`;
+                
+                html += '<table><thead><tr><th>电影ID</th><th>标题</th><th>平均评分</th><th>评分次数</th><th>最后更新</th></tr></thead><tbody>';
+                
+                movies.forEach(movie => {
+                    html += `
+                        <tr>
+                            <td>${movie.movieId}</td>
+                            <td>${movie.title}</td>
+                            <td><span class="rating-badge">${movie.avgRating.toFixed(2)} ⭐</span></td>
+                            <td>${movie.ratingCount}</td>
+                            <td>${new Date(movie.lastUpdateTime).toLocaleString('zh-CN')}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                resultDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error searching movies:', error);
+                resultDiv.innerHTML = '<p class="loading">搜索失败，请检查后端服务</p>';
+            }
+        }
+        
+        // 加载所有电影
+        async function loadAllMovies() {
+            const allMoviesDiv = document.getElementById('allMovies');
+            const infoDiv = document.getElementById('allMoviesInfo');
+            
+            allMoviesDiv.innerHTML = '<p class="loading">加载中，请稍候...</p>';
+            infoDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE}/ratings`);
+                const movies = await response.json();
+                
+                if (movies.length === 0) {
+                    allMoviesDiv.innerHTML = '<p class="loading">暂无数据</p>';
+                    return;
+                }
+                
+                // 显示统计信息
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = `
+                    共查询到 <strong>${movies.length}</strong> 部电影的评分数据 (数据来源: HBase movie_ratings表)
+                `;
+                
+                // 生成表格
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>电影ID</th>
+                                <th>标题</th>
+                                <th>平均评分</th>
+                                <th>评分次数</th>
+                                <th>最后更新时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                movies.forEach((movie, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${movie.movieId}</td>
+                            <td>${movie.title}</td>
+                            <td><span class="rating-badge">${movie.avgRating.toFixed(2)} ⭐</span></td>
+                            <td>${movie.ratingCount}</td>
+                            <td>${new Date(movie.lastUpdateTime).toLocaleString('zh-CN')}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                allMoviesDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading all movies:', error);
+                allMoviesDiv.innerHTML = '<p class="loading">加载失败，请检查后端服务</p>';
+            }
+        }
+        
+        // 支持回车键查询
+        document.getElementById('movieId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                queryMovie();
+            }
+        });
+        
+        // 支持回车键搜索标题
+        document.getElementById('movieTitle').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchByTitle();
+            }
+        });
+    </script>
+</body>
+</html>
